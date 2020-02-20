@@ -112,6 +112,12 @@ func (proc *Process) pickBestLibrary(daysLeft int) int {
 		}
 	}
 
+	avg := 0
+	for _, lib := range proc.NonProcessedLibraries {
+		avg += lib.SignupTime
+	}
+	avgSignupTime := avg / len(proc.NonProcessedLibraries)
+
 	for libraryIndex := range proc.NonProcessedLibraries {
 		library := proc.NonProcessedLibraries[libraryIndex]
 		daysLeftWithoutSignup := daysLeft - library.SignupTime
@@ -129,7 +135,7 @@ func (proc *Process) pickBestLibrary(daysLeft int) int {
 			score += proc.BookScores[bookID]
 			bookTaken++
 		}
-		score = score / library.SignupTime
+		score = score + (avgSignupTime/library.SignupTime)*score
 		if score > bestScore {
 			bestLib = libraryIndex
 			bestScore = score
