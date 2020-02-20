@@ -80,18 +80,11 @@ func (proc *Process) keepLibrarySignupGoing(daysLeft int) {
 		}
 	}
 	if proc.PendingSignupLib == nil && len(proc.NonProcessedLibraries) != 0 {
-		// fmt.Printf("before %v\n", proc.NonProcessedLibraries)
 		bestLibIndex := proc.pickBestLibrary(daysLeft)
-		// fmt.Printf("index: %v\n", bestLibIndex)
 		pendingSignup := Library{}
-		//proc.PendingSignupLib = &proc.NonProcessedLibraries[bestLibIndex]
 		copier.Copy(&pendingSignup, &proc.NonProcessedLibraries[bestLibIndex])
 		proc.PendingSignupLib = &pendingSignup
-		// fmt.Printf("before delete: %v\n", proc.NonProcessedLibraries)
-		// fmt.Printf("pending signup: %v\n", proc.PendingSignupLib)
 		proc.NonProcessedLibraries = append(proc.NonProcessedLibraries[0:bestLibIndex], proc.NonProcessedLibraries[bestLibIndex+1:]...)
-		// fmt.Printf("after delete: %v\n", proc.NonProcessedLibraries)
-		// fmt.Printf("pending signup: %v\n", proc.PendingSignupLib)
 	}
 	if proc.PendingSignupLib != nil {
 		proc.PendingSignupLib.SignupTime -= 1
@@ -101,10 +94,28 @@ func (proc *Process) keepLibrarySignupGoing(daysLeft int) {
 func (proc *Process) pickBestLibrary(daysLeft int) int {
 	bestLib := 0
 	bestScore := 0
+	processedBookInTheFuture := make([]bool, len(proc.BookScores))
+	for _, pickedLibrary := range proc.SignedUpLibrary {
+		bookTaken := 0
+		maxPossibleBooks := daysLeft * pickedLibrary.MaxBookPerDay
+
+		for bookIndex := 0; bookIndex < len(pickedLibrary.BookIDs); bookIndex++ {
+			if bookTaken > maxPossibleBooks {
+				break
+			}
+			bookID := pickedLibrary.BookIDs[bookIndex]
+			if proc.BookProcessed[bookID] {
+				continue
+			}
+			processedBookInTheFuture[bookID] = true
+			bookTaken++
+		}
+	}
+
 	for libraryIndex := range proc.NonProcessedLibraries {
 		library := proc.NonProcessedLibraries[libraryIndex]
 		daysLeftWithoutSignup := daysLeft - library.SignupTime
-		maxPossibleBooks := daysLeftWithoutSignup * library.BookCount
+		maxPossibleBooks := daysLeftWithoutSignup * library.MaxBookPerDay
 		score := 0
 		bookTaken := 0
 		for bookIndex := 0; bookIndex < len(library.BookIDs); bookIndex++ {
@@ -112,13 +123,12 @@ func (proc *Process) pickBestLibrary(daysLeft int) int {
 				break
 			}
 			bookID := library.BookIDs[bookIndex]
-			if proc.BookProcessed[bookID] {
+			if proc.BookProcessed[bookID] || processedBookInTheFuture[bookID] {
 				continue
 			}
 			score += proc.BookScores[bookID]
 			bookTaken++
 		}
-		// fmt.Printf("%v\n", library)
 		score = score / library.SignupTime
 		if score > bestScore {
 			bestLib = libraryIndex
