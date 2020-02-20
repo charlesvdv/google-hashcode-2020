@@ -9,7 +9,7 @@ echo -n "Compiling... "
 go build -o $executable
 echo "done"
 
-for input in ./input/*.in; do
+for input in ./input/*; do
     filename=$(basename "$input" .in)
     echo -n "Processing $filename... "
     bash -c "./$executable" < $(echo $input) > "./output/$filename.out"

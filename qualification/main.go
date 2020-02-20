@@ -2,14 +2,23 @@ package main
 
 import (
 	"bufio"
-	"io"
+	"fmt"
 	"os"
 )
 
-func parseInput(input io.Reader) {
+type Library struct {
+	BookCount     int
+	SignupTime    int
+	MaxBookPerDay int
+	BookIDS       []int
+}
 
+type Process struct {
+	BookProcessed map[int]bool
 }
 
 func main() {
-	parseInput(bufio.NewReader(os.Stdin))
+	days, books, librairies := parseInput(bufio.NewReader(os.Stdin))
+
+	fmt.Printf("%v\n%v\n%v\n", days, books, librairies)
 }
