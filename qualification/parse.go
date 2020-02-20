@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
@@ -39,12 +40,14 @@ func parseInput(input io.Reader) (int, []int, []Library) {
 		bookScores = append(bookScores, toInt(rawVal))
 	}
 
-	librairies := []Library{}
+	libraries := []Library{}
+	libraryID := 0
 	for scanner.Scan() {
 		library := Library{}
 		line = scanner.Text()
 		lineValues := strings.Split(line, " ")
 
+		library.ID = libraryID
 		library.BookCount = toInt(lineValues[0])
 		library.SignupTime = toInt(lineValues[1])
 		library.MaxBookPerDay = toInt(lineValues[2])
@@ -52,13 +55,14 @@ func parseInput(input io.Reader) (int, []int, []Library) {
 		scanner.Scan()
 		line = scanner.Text()
 		for _, book := range strings.Split(line, " ") {
-			library.BookIDS = append(library.BookIDS, toInt(book))
+			library.BookIDs = append(library.BookIDs, toInt(book))
 		}
 
-		librairies = append(librairies, library)
+		libraries = append(libraries, library)
+		libraryID += 1
 	}
 
-	if len(librairies) != libraryCount {
+	if len(libraries) != libraryCount {
 		log.Fatal("library don't match")
 	}
 
@@ -66,5 +70,33 @@ func parseInput(input io.Reader) (int, []int, []Library) {
 		log.Fatal("book don't match")
 	}
 
-	return numOfDays, bookScores, librairies
+	return numOfDays, bookScores, libraries
+}
+
+func format(libRegistered []int, booksByLib map[int][]int) {
+	goodLibs := libRegistered[:0]
+	for _, x := range libRegistered {
+		if len(booksByLib[x]) == 0 {
+			continue
+		}
+		goodLibs = append(goodLibs, x)
+	}
+
+	fmt.Printf("%v\n", len(goodLibs))
+
+	for _, lib := range goodLibs {
+		books := booksByLib[lib]
+		if len(books) == 0 {
+			continue
+		}
+		fmt.Printf("%v %v\n", lib, len(books))
+
+		for i, book := range books {
+			if i != 0 {
+				fmt.Printf(" ")
+			}
+			fmt.Printf("%v", book)
+		}
+		fmt.Printf("\n")
+	}
 }
